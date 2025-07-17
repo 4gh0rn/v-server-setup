@@ -1,0 +1,38 @@
+iptables:
+
+  rules:
+
+    input:
+      allow_ssh: true
+      allow_icmp: true
+      allow_loopback: true
+      allow_established_connections: true
+      # list of whitelisted ports, e.g.
+      # - port: 80
+      #   protocol: tcp
+      #   comment: HTTP webserver
+      #   [source: 1.1.1.1]
+      allow_additional_ports: []
+    forward:
+      allow_icmp: false
+      allow_established_connections: false
+      allow_additional_ports: []
+    custom: []
+    custom_chains: []
+    custom_template: []
+
+  tools:
+
+    # set default quite high so they do nothing by default
+    rate_limit:
+      upto: ""
+      burst: ""
+      log: ""
+
+    # set default quite high so they do nothing by default
+    connection_limit:
+      limit: ""
+      log: ""
+
+    blacklist: []
+    whitelist: []

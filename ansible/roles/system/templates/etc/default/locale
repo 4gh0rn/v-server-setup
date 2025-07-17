@@ -1,0 +1,2 @@
+# {{ ansible_managed }}
+LC_ALL={{ system.locale.default }}

@@ -1,0 +1,237 @@
+#!/bin/bash
+
+#
+# {{ ansible_managed }}
+#
+
+WHITELIST=/opt/iptables-tools/etc/whitelist
+BLACKLIST=/opt/iptables-tools/etc/blacklist
+BLACKLIST_AUTO=/opt/iptables-tools/etc/blacklist_auto
+BLACKLIST_FAIL2BAN=/opt/iptables-tools/etc/blacklist_fail2ban
+BLACKLIST_NONEU=/opt/iptables-tools/etc/blacklist_noneu
+IPTABLES=/sbin/iptables
+IPTABLES_SAVE=/sbin/iptables-save
+CONNTRACK=/usr/sbin/conntrack
+IPTABLES_TMP=/tmp/iptables_chains
+
+LIMIT_UPTO={{ iptables.tools.rate_limit.upto }}
+LIMIT_BURST={{ iptables.tools.rate_limit.burst }}
+LIMIT_LOG={{ iptables.tools.rate_limit.log }}
+
+CONN_LIMIT={{ iptables.tools.connection_limit.limit }}
+CONN_LOG={{ iptables.tools.connection_limit.log }}
+
+if [ -z "$LIMIT_UPTO" -o -z "$LIMIT_BURST" -o -z "$LIMIT_LOG" -o -z "$CONN_LIMIT" -o -z "$CONN_LOG" ]
+then
+    echo "You have to set all variables before executing this script"
+    exit 1
+fi
+
+paramRESETCHAINS=0
+
+helpFunction()
+{
+   echo ""
+   echo "Usage: $0 -a -i -f -n -r"
+   echo -e "\t-a DROP all blacklists (static, jenkins, non-eu, file2ban)"
+   echo -e "\t-i DROP only static, jenkins and ipintel ipset"
+   echo -e "\t-f DROP only static, jenkins and file2ban blacklist"
+   echo -e "\t-n DROP only static, jenkins and non-eu blacklist"
+   echo -e "\t-r reset CHAINs"
+   exit 1 # Exit script after printing help
+}
+
+blacklist_rule_exists () {
+  res=`grep "$1" $IPTABLES_TMP | grep blacklist | wc -l`
+  if (( $res > 0 ))
+  then
+    return 1
+  fi
+
+  return 0
+}
+
+while getopts "aifnr" opt
+do
+   case "$opt" in
+      a ) paramALL=1 ;;
+      i ) paramIPINTEL=1 ;;
+      f ) paramFAIL2BAN=1 ;;
+      n ) paramNONEU=1 ;;
+      r ) paramRESETCHAINS=1 ;;
+      ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
+   esac
+done
+
+if [[ $paramRESETCHAINS -eq 1 ]]
+then
+
+  $IPTABLES -P INPUT ACCEPT
+  echo 'Setting default INPUT policy to ACCEPT'
+  $IPTABLES -F
+  echo 'Clearing tables'
+  $IPTABLES -X
+  echo 'Deleting user defined chains'
+  $IPTABLES -Z
+  echo 'Zero chain counters'
+  $CONNTRACK -F
+  echo 'conntrack table flushed'
+
+  #
+  ## whitelist 127.0.0.1 without comment
+  #
+  $IPTABLES -A INPUT -s 127.0.0.1 -j ACCEPT
+
+fi
+
+
+# save current iptable rules in tmp file
+$IPTABLES -L --num --line-numbers > $IPTABLES_TMP
+
+#
+## Whitelist
+#
+if [[ $paramRESETCHAINS -eq 1 ]]
+then
+  for x in `grep -v ^# $WHITELIST | awk '{print $1}'`; do
+    if [[ $x =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/?[0-9]*$ ]]
+    then
+      echo "Permitting $x"
+      $IPTABLES -A INPUT -m comment --comment "whitelist" -s $x -j ACCEPT
+    fi
+  done
+fi
+
+whitelistcount=`iptables -L --num | grep whitelist | wc -l`
+# increment count by 2, after ACCEPT 127.0.0.1 is the very first rule
+whitelistcount=$((whitelistcount+2))
+
+
+#
+## DROP static blacklist
+#
+for x in `grep -v ^# $BLACKLIST | awk '{print $1}'`; do
+  if [[ $x =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/?[0-9]*$ ]]
+  then
+    blacklist_rule_exists $x
+    exist=$?
+    if [[ $exist -ne 1 ]]
+    then
+      echo "Denying $x"
+      $IPTABLES -I INPUT $whitelistcount -s $x -m comment --comment "blacklist" -j DROP
+    fi
+  fi
+done
+
+#
+## DROP auto blacklist
+#
+for x in `grep -v ^# $BLACKLIST_AUTO | awk '{print $1}'`; do
+  if [[ $x =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/?[0-9]*$ ]]
+  then
+    blacklist_rule_exists $x
+    exist=$?
+    if [[ $exist -ne 1 ]]
+    then
+      echo "Denying auto blacklisted $x"
+      $IPTABLES -I INPUT $whitelistcount -s $x -m comment --comment "blacklist" -j DROP
+    fi
+  fi
+done
+
+#
+## DROP ipintel ipset
+#
+if [[ $paramIPINTEL -eq 1 || $paramALL -eq 1 ]]
+then
+    blacklist_rule_exists "match-set ipintel src"
+    exist=$?
+    if [[ $exist -ne 1 ]]
+    then
+      echo "Adding ipintel ipset rule"
+      $IPTABLES -I INPUT $whitelistcount -m set -m comment --comment "blacklist" --match-set ipintel src -j DROP
+    fi
+fi
+#
+## Remove ipintel ipset
+#
+if [[ $paramIPINTEL -ne 1 ]]
+then
+    blacklist_rule_exists "match-set ipintel src"
+    exist=$?
+    if [[ $exist -eq 1 ]]
+    then
+      echo "Removing ipintel ipset rule"
+      $IPTABLES -D INPUT -m set -m comment --comment "blacklist" --match-set ipintel src -j DROP
+    fi
+fi
+
+#
+## DROP fail2ban blacklist
+#
+if [[ $paramFAIL2BAN -eq 1 || $paramALL -eq 1 ]]
+then
+  for x in `grep -v ^# $BLACKLIST_FAIL2BAN | awk '{print $1}'`; do
+    if [[ $x =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/?[0-9]*$ ]]
+    then
+      blacklist_rule_exists $x
+      exist=$?
+      if [[ $exist -ne 1 ]]
+      then
+        echo "Denying fail2ban $x"
+        $IPTABLES -I INPUT $whitelistcount -s $x -m comment --comment "blacklist" -j DROP
+      fi
+    fi
+  done
+fi
+
+#
+## DROP NON-EU blacklist
+#
+if [[ $paramNONEU -eq 1 || $paramALL -eq 1 ]]
+then
+  for x in `grep -v ^# $BLACKLIST_NONEU | awk '{print $1}'`; do
+    if [[ $x =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/?[0-9]*$ ]]
+    then
+      blacklist_rule_exists $x
+      exist=$?
+      if [[ $exist -ne 1 ]]
+      then
+        echo "Denying non-eu $x"
+        $IPTABLES -I INPUT $whitelistcount -s $x -m comment --comment "blacklist" -j DROP
+      fi
+    fi
+  done
+fi
+
+if [[ $paramRESETCHAINS -eq 1 ]]
+then
+  #
+  ## RATE-LIMIT
+  #
+  $IPTABLES -N RATE-LIMIT
+  $IPTABLES -N CONN-LIMIT
+  $IPTABLES -A INPUT -m comment --comment "input_new"  -m conntrack --ctstate NEW -j RATE-LIMIT
+  $IPTABLES -A RATE-LIMIT \
+      -m hashlimit \
+      --hashlimit-mode srcip \
+      --hashlimit-upto $LIMIT_UPTO \
+      --hashlimit-burst $LIMIT_BURST \
+      --hashlimit-name conn_rate_limit \
+      -j ACCEPT
+  $IPTABLES -A RATE-LIMIT -m limit --limit $LIMIT_LOG -j LOG --log-prefix "[iptables][rate_limit_drop]: "
+  $IPTABLES -A RATE-LIMIT -m comment --comment 'rate_limit_drop' -j DROP # change this to DROP for real dropping
+
+  #
+  ## CONN-LIMIT
+  #
+  $IPTABLES -A INPUT -p tcp -m connlimit --connlimit-above $CONN_LIMIT -j CONN-LIMIT
+  $IPTABLES -A CONN-LIMIT -m limit --limit $CONN_LOG -j LOG --log-prefix "[iptables][conn_limit_drop]: "
+  $IPTABLES -A CONN-LIMIT -m comment --comment 'conn_limit_drop' -j DROP # change this to DROP for real dropping
+
+
+fi
+
+
+# $IPTABLES_SAVE > /etc/iptables/rules.v4
+

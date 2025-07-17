@@ -1,0 +1,26 @@
+- name: add authorized_keys for the system users
+  authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.authorized_key }}"
+    exclusive: "{{ ssh.authorized_key_exclusive }}"
+  when: item.authorized_key is not none and not ansible_check_mode
+  with_items: "{{ ssh.users }}"
+  tags: initial-setup
+
+- name: Copy sshd config
+  template:
+    src: etc/ssh/sshd_config
+    dest: /etc/ssh/sshd_config
+  notify: restart ssh
+  tags: initial-setup
+
+- name: Copy ssh config
+  template:
+    src: etc/ssh/ssh_config
+    dest: /etc/ssh/ssh_config
+
+- name: Copy ssh pam.d config
+  template:
+    src: etc/pam.d/sshd
+    dest: /etc/pam.d/sshd
+  notify: restart ssh

@@ -1,0 +1,6 @@
+- name: set up specific groups
+  group:
+    gid: "{{ item.gid }}"
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  with_items: "{{ system.accounts.groups.values() | list }}"

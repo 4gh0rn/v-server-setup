@@ -1,0 +1,3 @@
+---
+system_network_custom_ip: false
+bashrc_session_timeout: 5400

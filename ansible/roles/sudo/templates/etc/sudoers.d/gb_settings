@@ -1,0 +1,17 @@
+#
+# {{ ansible_managed }}
+#
+
+{% if sudo.users %}
+{% for item in sudo.users.values() | list %}
+{{ item.name }} {{ item.hosts | default('ALL') }}={{ "(" ~ item.users | default('ALL') ~ ":" ~ item.groups | default('ALL') ~ ")" }} {{ "NOPASSWD:" if item.nopasswd | default(false) else "" }} {{ item.commands | default('ALL') }}
+{% endfor %}
+{% endif %}
+
+
+# Allow members admin group to execute any command
+{% if sudo.groups %}
+{% for item in sudo.groups.values() | list %}
+%{{ item.name }} {{ item.hosts | default('ALL') }}={{ "(" ~ item.users | default('ALL') ~ ":" ~ item.groups | default('ALL') ~ ")" }} {{ "NOPASSWD:" if item.nopasswd | default(false) else "" }} {{ item.commands | default('ALL') }}
+{% endfor %}
+{% endif %}

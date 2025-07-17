@@ -1,0 +1,9 @@
+- name: install dbus a dependency of hostnamectl used by ansible
+  apt:
+    name: dbus
+    state: latest
+
+- name: Set hostname
+  hostname:
+    name: "{{ host.system.hostname }}"
+  when: host.system.hostname is defined and host.system.hostname != ""

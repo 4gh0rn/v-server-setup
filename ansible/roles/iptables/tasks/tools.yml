@@ -1,0 +1,39 @@
+- name: create iptables-tools app folder
+  file:
+    name: "/opt/iptables-tools/{{ item }}"
+    owner: root
+    group: root
+    recurse: yes
+  with_items:
+    - bin
+    - etc
+
+- name: copy fw.sh/flush_iptables.sh
+  template:
+    src: "opt/iptables-tools/bin/{{ item }}"
+    dest: "/opt/iptables-tools/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: 0700
+  with_items:
+    - iptables-limit
+    - iptables-flush
+    - whois-asns-ip-ranges.sh
+
+- name: add it to path
+  alternatives:
+    name: "{{ item }}"
+    link: /usr/local/bin/{{ item }}
+    path: /opt/iptables-tools/bin/{{ item }}
+  with_items:
+    - iptables-limit
+    - iptables-flush
+    - whois-asns-ip-ranges.sh
+
+- name: Copy iptables whitelist/blacklist
+  template:
+    src: 'opt/iptables-tools/etc/{{ item }}'
+    dest: '/opt/iptables-tools/etc/{{ item }}'
+  with_items:
+    - whitelist
+    - blacklist

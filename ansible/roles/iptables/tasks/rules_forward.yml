@@ -1,0 +1,39 @@
+- name: Flush existing iptable rules in FORWARD chain
+  iptables:
+    chain: FORWARD
+    flush: true
+
+- name: Firewall policy FORWARD - drop all
+  iptables:
+    chain: FORWARD
+    policy: DROP
+
+- name: Firewall rule FORWARD - allow established connections
+  iptables:
+    chain: FORWARD
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+  when: iptables.rules.forward.allow_established_connections
+
+- name: Firewall rule FORWARD - allow port ping traffic
+  iptables:
+    chain: FORWARD
+    jump: ACCEPT
+    protocol: icmp
+  when: iptables.rules.forward.allow_icmp
+
+- name: Firewall rule FORWARD - allow additional ports
+  iptables:
+    chain: FORWARD
+    source: "{{ item.source | default('0.0.0.0/0') }}"
+    destination_port: "{{ item.port }}"
+    jump: ACCEPT
+    protocol: "{{ item.protocol }}"
+    comment: "{{ item.comment }}"
+  with_items: "{{ iptables.rules.forward.allow_additional_ports }}"
+
+- name: Firewall rule FORWARD - DROP everything else
+  iptables:
+    chain: FORWARD
+    jump: DROP
+    protocol: all

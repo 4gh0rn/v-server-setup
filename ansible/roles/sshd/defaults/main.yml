@@ -1,0 +1,23 @@
+ssh:
+  # defines the ssh port
+  port: 22
+  include_git_user: false
+
+  # enables or disables dns resolve queries of ssh
+  use_dns: true
+
+  # Removes all other authorized keys and sets only the mentioned ones
+  authorized_key_exclusive: true
+
+  # allow only given users to login
+  restrict_users: true
+
+  permit_root_login: "no"
+
+  # no and yes without quotes will be inpreted as true and false!
+  password_authentication: false
+
+  # defines the users to enable for ssh usage
+  users:
+    - root:
+        authorized_key: ~

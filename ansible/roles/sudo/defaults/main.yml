@@ -1,0 +1,35 @@
+sudo:
+
+  # set defaults
+  defaults:
+    env_reset: true
+    mail_badpass: true
+    secure_path: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+  # set rules for users
+  #
+  # The dict the role accepts
+  # {
+  #   name: The name of the group
+  #   hosts: The hosts to restrict (optional; default if not set: ALL)
+  #   users: The users which the user can inpersonate via sudo (optional; default if not set: ALL)
+  #   groups: The groups which the user can inpersonate via sudo (optional; default if not set: ALL)
+  #   commands: The commands which can be executed via sudo (optional; default if not set: ALL)
+  #   nopasswd: Boolean flag to signal if a password will be needed or not
+  # }
+  #
+  users: []
+
+  # set rules for groups
+  #
+  # The dict the role accepts
+  # {
+  #   name: The name of the group
+  #   hosts: The hosts to restrict (optional; default if not set: ALL)
+  #   users: The users which the user can inpersonate via sudo (optional; default if not set: ALL)
+  #   groups: The groups which the user can inpersonate via sudo (optional; default if not set: ALL)
+  #   commands: The commands which can be executed via sudo (optional; default if not set: ALL)
+  #   nopasswd: Boolean flag to signal if a password will be needed or not
+  # }
+  #
+  groups: []

@@ -1,0 +1,6 @@
+- name: Install netfilter-persistent and "iptables-persistent" packages
+  apt:
+    name:
+      - iptables-persistent
+      - netfilter-persistent
+    state: present

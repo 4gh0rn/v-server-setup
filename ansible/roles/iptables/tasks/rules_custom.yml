@@ -1,0 +1,34 @@
+- name: Flush existing iptable rules in custom chain
+  iptables:
+    chain: "{{ item.name }}"
+    flush: true
+  with_items: "{{ iptables.rules.custom_chains }}"
+
+- name: Firewall custom chains
+  iptables:
+    chain: "{{ item.name }}"
+    chain_management: true
+  with_items: "{{ iptables.rules.custom_chains }}"
+
+- name: Firewall rules custom
+  iptables:
+    chain: "{{ item.chain }}"
+    source: "{{ item.source | default('0.0.0.0/0') }}"
+    destination_port: "{{ item.port | default(None) }}"
+    jump: "{{ item.jump | default('ACCEPT') }}"
+    protocol: "{{ item.protocol | default('') }}"
+    comment: "{{ item.comment | default(None) }}"
+  with_items: "{{ iptables.rules.custom }}"
+
+- name: Firewall custom template
+  template:
+    src: etc/iptables/rules_template.sh
+    dest: /etc/iptables/rules_template.sh
+    mode: '0755'
+  when: iptables.rules.custom_template
+
+- name: Run custom rules template script
+  command: /etc/iptables/rules_template.sh
+  when: iptables.rules.custom_template
+  register: rules_script
+  changed_when: rules_script.stdout

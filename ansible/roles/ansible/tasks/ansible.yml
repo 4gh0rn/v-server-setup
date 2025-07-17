@@ -1,0 +1,5 @@
+- name: Install ansible
+  pip:
+    name: ansible
+    state: present
+    version: "{{ ansible.version }}"

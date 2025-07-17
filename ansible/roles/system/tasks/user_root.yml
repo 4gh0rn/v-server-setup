@@ -1,0 +1,12 @@
+- name: set root password
+  user:
+    name: root
+    password: "{{ system.accounts.users.root.password | password_hash('sha512') }}"
+
+- name: add root .bashrc
+  template:
+    src: root/.bashrc
+    dest: "/root/.bashrc"
+    owner: "root"
+    group: "root"
+    force: yes

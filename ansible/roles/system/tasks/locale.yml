@@ -1,0 +1,10 @@
+- name: add necessary locales
+  locale_gen:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ system.locale.all }}"
+
+- name: configure default system locale/language
+  template:
+    src: etc/default/locale
+    dest: /etc/default/locale

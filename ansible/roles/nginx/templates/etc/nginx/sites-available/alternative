@@ -1,0 +1,19 @@
+#
+# {{ ansible_managed }}
+# Alternative nginx site on port 8081
+#
+server {
+    listen {{ nginx_basic.alt_port }};
+    listen [::]:{{ nginx_basic.alt_port }};
+
+    root /var/www/alternative;
+    index custom.html;
+
+    server_name _;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # Security headers are loaded from conf.d/security.conf
+}

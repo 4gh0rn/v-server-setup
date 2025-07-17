@@ -1,0 +1,7 @@
+- name: restart conntrackd
+  action: service name=conntrackd state=restarted
+
+- name: restart docker
+  systemd:
+    name: docker
+    state: restarted

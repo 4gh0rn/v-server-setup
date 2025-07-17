@@ -1,0 +1,29 @@
+- name: Install conntrack-tools packages
+  apt:
+    name:
+      - conntrack
+      - conntrackd
+    state: present
+
+- name: Set conntrack limits in sysctl
+  sysctl:
+    name: '{{ item.key }}'
+    value: '{{ item.value }}'
+    sysctl_set: yes
+    state: present
+    reload: yes
+    ignoreerrors: yes
+  with_items:
+    #- { key: net.netfilter.nf_conntrack_max, value: 2500000 }
+    - { key: net.netfilter.nf_conntrack_buckets, value: 2500096 }
+    - { key: net.netfilter.nf_conntrack_tcp_timeout_time_wait, value: 2 }
+    - { key: net.netfilter.nf_conntrack_tcp_timeout_close_wait, value: 10 }
+    - { key: net.netfilter.nf_conntrack_tcp_timeout_fin_wait, value: 30 }
+    - { key: net.netfilter.nf_conntrack_tcp_timeout_syn_sent, value: 60 }
+
+- name: Copy conntrackd configuration
+  template:
+    src: etc/conntrackd/conntrackd.conf
+    dest: /etc/conntrackd/conntrackd.conf
+  notify:
+    - restart conntrackd

@@ -1,0 +1,34 @@
+# Update the APT cache once upfront so we do not have to add the options
+#  (update_cache and cache lifetime etc.) to every apt task
+- name: Manual setup for all linux nodes
+  hosts: linux
+  become: true
+  vars:
+    ansible_ssh_timeout: 60
+  tasks:
+    - name: Update APT cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      check_mode: false
+      tags: always
+
+    - name: Gather the package facts
+      package_facts:
+        manager: auto
+      check_mode: false
+      tags: always
+
+- name: Execute Server setup
+  hosts: linux
+  become: true
+  vars:
+    ansible_ssh_timeout: 60
+  roles:
+    - system
+    - base
+    - sudo
+    - sshd
+    - iptables
+    - ansible
+    - nginx

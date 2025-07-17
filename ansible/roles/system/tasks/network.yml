@@ -1,0 +1,7 @@
+---
+- name: set interfaces config
+  ansible.builtin.template:
+    src: etc/network/interfaces
+    dest: /etc/network/interfaces
+  notify: restart network interfaces
+  when: system_network_custom_ip

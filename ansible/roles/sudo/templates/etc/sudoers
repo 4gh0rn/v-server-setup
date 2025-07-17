@@ -1,0 +1,31 @@
+# {{ ansible_managed }}
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# Please consider adding local content in /etc/sudoers.d/ instead of
+# directly modifying this file.
+#
+# See the man page for details on how to write a sudoers file.
+#
+{% if sudo.defaults.env_reset %}
+Defaults env_reset
+{% endif %}
+{% if sudo.defaults.mail_badpass %}
+Defaults mail_badpass
+{% endif %}
+{% if sudo.defaults.secure_path %}
+Defaults secure_path="{{ sudo.defaults.secure_path }}"
+{% endif %}
+
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+
+# See sudoers(5) for more information on "#include" directives:
+
+#includedir /etc/sudoers.d

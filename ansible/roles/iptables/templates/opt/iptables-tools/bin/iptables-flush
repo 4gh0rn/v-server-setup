@@ -1,0 +1,3 @@
+#!/bin/sh
+
+iptables -F && iptables -X && iptables -Z && conntrack -F && iptables -L

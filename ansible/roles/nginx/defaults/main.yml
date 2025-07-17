@@ -1,0 +1,9 @@
+---
+# Basic Nginx Configuration
+nginx_basic:
+  package: nginx
+  service: nginx
+  hide_version: true
+  security_headers: true
+  port: 8082
+  alt_port: 8081

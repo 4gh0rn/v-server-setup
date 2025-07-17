@@ -1,0 +1,22 @@
+- import_tasks: iptables.yml
+  tags:
+    - iptables
+    - setup
+
+- import_tasks: conntrack.yml
+  tags:
+    - iptables
+    - iptables-conntrack
+    - setup
+
+- import_tasks: tools.yml
+  tags:
+    - iptables
+    - iptables-tools
+    - setup
+
+- import_tasks: rules.yml
+  tags:
+    - iptables
+    - iptables-rules
+    - setup

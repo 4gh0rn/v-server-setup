@@ -1,0 +1,20 @@
+- name: create python executable
+  apt:
+    name: python3
+
+# new pip
+- block:
+    - name: install pip
+      apt:
+        name: python3-pip
+    - name: install python dependencies via apt
+      apt:
+        name:
+          - python3-setuptools
+          - python3-mysqldb
+          - python3-passlib
+          - python3-influxdb
+          - python3-docker
+          - python3-cryptography
+      when: not ansible_check_mode
+  when: os.version_nr >= 10

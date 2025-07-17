@@ -1,0 +1,49 @@
+ansible_host: 159.69.209.108
+
+host:
+  system:
+    hostname: uwe-wohlleber
+
+os:
+  version_nr: 22.04
+  version_name: jammy
+
+system:
+  apt:
+    server: archive.ubuntu.com
+    additional_options:
+
+  accounts:
+    users:
+      uwewohlleber:
+        state: present
+      adminuwe:
+        state: present
+
+root_password: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  65613836343734656137396539643664623561333862653564663236633766343133353039333331
+  3935626336623864313534633735663762666233636539390a343963393261396337323666613739
+  35633031633933623861336365343364323938376231323362386134306564333837616464643030
+  3735303839306135380a383931666133623961323339623937356362333831623839333537636231
+  66653839336138373833353735363037383130633039656138623461323566623734
+
+ssh:
+  enable_sk: true
+
+iptables:
+  rules:
+    input:
+      allow_additional_ports:
+        - port: 80
+          protocol: tcp
+          comment: http
+        - port: 443
+          protocol: tcp
+          comment: https
+        - port: 8081
+          protocol: tcp
+          comment: nginx alternative site
+        - port: 8082
+          protocol: tcp
+          comment: nginx

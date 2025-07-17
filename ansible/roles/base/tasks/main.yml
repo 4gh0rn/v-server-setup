@@ -1,0 +1,19 @@
+- import_tasks: hostname.yml
+  tags:
+    - hostname
+    - base
+    - base-hostname
+    - setup
+
+- import_tasks: tools.yml
+  tags:
+    - base
+    - base-tools
+    - setup
+
+- import_tasks: python.yml
+  tags:
+    - base
+    - base-python
+    - python
+    - setup

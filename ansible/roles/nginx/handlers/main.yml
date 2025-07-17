@@ -1,0 +1,12 @@
+---
+- name: restart nginx
+  ansible.builtin.systemd:
+    name: "{{ nginx_basic.service }}"
+    state: restarted
+  tags: [nginx_basic]
+
+- name: reload nginx
+  ansible.builtin.systemd:
+    name: "{{ nginx_basic.service }}"
+    state: reloaded
+  tags: [nginx_basic]

@@ -1,0 +1,51 @@
+- import_tasks: apt.yml
+  tags:
+    - system
+    - system-apt
+    - initial-setup
+
+- import_tasks: group.yml
+  tags:
+    - system
+    - system-group
+    - initial-setup
+
+- import_tasks: user.yml
+  tags:
+    - system
+    - system-user
+    - initial-setup
+
+- import_tasks: user_root.yml
+  tags:
+    - system-user-root
+    - initial-setup
+
+- import_tasks: network.yml
+  tags:
+    - initial-setup
+
+# Configures the timezone
+- import_tasks: timezone.yml
+  tags:
+    - system
+    - system-timezone
+    - setup
+
+- import_tasks: locale.yml
+  tags:
+    - system
+    - system-locale
+    - setup
+
+- import_tasks: motd.yml
+  tags:
+    - system
+    - system-motd
+    - setup
+
+- name: set root password
+  become: true
+  user:
+    name: root
+    password: "{{ root_password }}"

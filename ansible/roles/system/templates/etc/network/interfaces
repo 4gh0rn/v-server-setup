@@ -1,0 +1,40 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+{% if system_network_interface_ens192_hotplug is true %}
+allow-hotplug ens192
+{% endif %}
+iface ens192 inet static
+{% if system_network_interface_ens192_ip is defined %}
+	address {{ system_network_interface_ens192_ip }}
+{% endif %}
+{% if system_network_interface_ens192_gw is defined %}
+	gateway {{ system_network_interface_ens192_gw }}
+{% endif %}
+	# dns-* options are implemented by the resolvconf package, if installed
+{% if system_network_interface_ens192_dns is defined %}
+	dns-nameservers {{ system_network_interface_ens192_dns }}
+{% endif %}
+
+# The primary network interface
+{% if system_network_interface_ens224_hotplug is true %}
+allow-hotplug ens224
+{% endif %}
+iface ens224 inet static
+{% if system_network_interface_ens224_ip is defined %}
+	address {{ system_network_interface_ens224_ip }}
+{% endif %}
+{% if system_network_interface_ens224_gw is defined %}
+	gateway {{ system_network_interface_ens224_gw }}
+{% endif %}
+	# dns-* options are implemented by the resolvconf package, if installed
+{% if system_network_interface_ens224_dns is defined %}
+	dns-nameservers {{ system_network_interface_ens224_dns }}
+{% endif %}

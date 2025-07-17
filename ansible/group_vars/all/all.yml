@@ -1,0 +1,96 @@
+system:
+  locale:
+    all:
+      - de_DE.UTF-8
+      - en_US.UTF-8
+    default: en_US.UTF-8
+  motd: This is a machine managed by ansible |
+    maintained by Uwe Wohlleber
+
+  accounts:
+    # Removes the default user with uid=1000 which gets created during installation
+    remove_default: true
+    # Sets the prompt colored or black and white
+    prompt_colored: true
+    # default prompt color
+    prompt_color_user: 37
+    prompt_color_root: 37
+    prompt_color_host: 33
+    # Configures command aliases like "ls -la" -> "la"
+    aliases: {}
+    groups:
+      root:
+        gid: 0
+        name: root
+        state: present
+      admin:
+        gid: 501
+        name: admin
+        state: absent
+      ssh:
+        gid: 502
+        name: ssh
+        state: present
+    users:
+      root:
+        uid: 0
+        name: root
+        password: "{{ root_password }}"
+        authorized_key:
+        home: /home/root
+        shell: /bin/bash
+        groups: []
+        state: present
+
+sudo:
+  groups:
+    gb_admin:
+      name: gb_admin
+      hosts: ALL
+      users: ALL
+      groups: ALL
+      commands: ALL
+      nopasswd: false
+
+    admin:
+      name: admin
+      hosts: ALL
+      users: ALL
+      groups: ALL
+      commands: ALL
+      nopasswd: false
+
+ssh:
+  Port: "22"
+  users: "{{ system.accounts.users.values() | selectattr('state', 'equalto', 'present') | list }}"
+  users_nochallenge:
+    - root
+  #use_dns: true # currently not in use
+  authorized_key_exclusive: true
+  #restrict_users: true # currently not in use
+  #permit_root_login: prohibit-password # currently not in use
+  #password_authentication: false # currently not in use
+
+  AllowGroups: ssh # will be enabled in a future version
+  AllowAgentForwarding: "yes"
+  PermitRootLogin: "no"
+  PasswordAuthentication: "no"
+  KerberosAuthentication: "no"
+  AuthenticationMethods: "publickey"
+  PubkeyAuthentication: "yes"
+  PubkeyAcceptedKeyTypes: "sk-ssh-ed25519@openssh.com"
+  PubkeyAuthOptions: touch-required verify-required
+  KbdInteractiveAuthentication: "no"
+
+iptables:
+  rules:
+    input:
+      allow_additional_ports:
+        - port: 80
+          protocol: tcp
+          comment: http
+        - port: 443
+          protocol: tcp
+          comment: https
+    forward:
+      allow_established_connections: true

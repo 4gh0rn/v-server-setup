@@ -1,0 +1,6 @@
+---
+- import_tasks: install.yml
+  tags: [nginx_install, nginx]
+
+- import_tasks: config.yml
+  tags: [nginx_config, nginx]

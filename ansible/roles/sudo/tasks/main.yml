@@ -1,0 +1,5 @@
+- import_tasks: sudo.yml
+  tags:
+    - sudo
+    - initial-setup
+    - setup

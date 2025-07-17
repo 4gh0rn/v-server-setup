@@ -1,0 +1,5 @@
+system:
+  accounts:
+    aliases:
+      ll: "ls -la"
+      l: "ls -lah"

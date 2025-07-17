@@ -1,0 +1,64 @@
+---
+- name: Deploy nginx main configuration
+  ansible.builtin.template:
+    src: etc/nginx/nginx.conf
+    dest: /etc/nginx/nginx.conf
+    backup: yes
+  notify: reload nginx
+  tags: [nginx_basic, config]
+
+- name: Deploy security configuration
+  ansible.builtin.template:
+    src: etc/nginx/conf.d/security.conf
+    dest: /etc/nginx/conf.d/security.conf
+  notify: reload nginx
+  when: nginx_basic.security_headers
+  tags: [nginx_basic, config, security]
+
+- name: Deploy default nginx site
+  ansible.builtin.template:
+    src: etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-available/default
+  notify: reload nginx
+  tags: [nginx_basic, config]
+
+- name: Enable default nginx site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-enabled/default
+    state: link
+  notify: reload nginx
+  tags: [nginx_basic, config]
+
+- name: Create alternative web directory
+  ansible.builtin.file:
+    path: /var/www/alternative
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  tags: [nginx_basic, config]
+
+- name: Deploy custom HTML file
+  ansible.builtin.template:
+    src: var/www/alternative/custom.html
+    dest: /var/www/alternative/custom.html
+    owner: www-data
+    group: www-data
+    mode: '0644'
+  tags: [nginx_basic, config]
+
+- name: Deploy alternative nginx site
+  ansible.builtin.template:
+    src: etc/nginx/sites-available/alternative
+    dest: /etc/nginx/sites-available/alternative
+  notify: reload nginx
+  tags: [nginx_basic, config]
+
+- name: Enable alternative nginx site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/alternative
+    dest: /etc/nginx/sites-enabled/alternative
+    state: link
+  notify: reload nginx
+  tags: [nginx_basic, config]

@@ -1,0 +1,32 @@
+- name: Install tools
+  apt:
+    name:
+      - gawk
+      - rsync
+      - net-tools
+      - vim-common
+      - vim
+      - mc
+      - screen
+      - curl
+      - ca-certificates
+      - aptitude
+      - apt-transport-https
+      - socat
+      - jq
+      - gzip
+      - telnet
+      - tmux
+    state: latest
+
+- name: Install monitoring tools
+  apt:
+    name:
+      - htop
+      - iotop
+      - nload
+      - dstat
+      - tcpdump
+      - sysstat
+      - nmon
+    state: latest

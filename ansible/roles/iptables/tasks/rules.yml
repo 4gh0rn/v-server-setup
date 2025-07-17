@@ -1,0 +1,35 @@
+- name: check if any services need restarting when flushing iptables
+  when: not ansible_check_mode
+  block:
+  - name: get service facts
+    service_facts:
+
+  - name: restart docker if it is running
+    debug:
+      msg: Notifying docker service for restart
+    changed_when: true
+    when: "'docker.service' in ansible_facts.services and ansible_facts.services['docker.service'].state == 'running'"
+    notify: restart docker
+
+- import_tasks: rules_input.yml
+  tags:
+    - iptables
+    - iptables-rules
+    - iptables-rules-input
+
+- import_tasks: rules_forward.yml
+  tags:
+    - iptables
+    - iptables-rules
+    - iptables-rules-forward
+
+- import_tasks: rules_custom.yml
+  tags:
+    - iptables
+    - iptables-rules
+    - iptables-rules-custom
+
+- name: Persist iptable Rules
+  community.general.iptables_state:
+    state: saved
+    path: /etc/iptables/rules.v4

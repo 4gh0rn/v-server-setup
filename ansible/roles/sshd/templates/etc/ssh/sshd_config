@@ -1,0 +1,110 @@
+#jinja2: trim_blocks:False
+# Package generated configuration file
+# See the sshd_config(5) manpage for details
+#
+# {{ ansible_managed }}
+#
+
+# What ports, IPs and protocols we listen for
+Port {{ ssh.port }}
+{% if ssh.second_port is defined %}
+Port {{ ssh.second_port }}
+{% endif %}
+# Use these options to restrict which interfaces/protocols sshd will bind to
+#ListenAddress ::
+#ListenAddress 0.0.0.0
+Protocol 2
+# HostKeys for protocol version 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+
+# Logging
+SyslogFacility AUTH
+LogLevel INFO
+
+# Authentication:
+LoginGraceTime 120
+PermitRootLogin {% if ssh.permit_root_login == true %}yes{% elif ssh.permit_root_login == false %}no{% else %}{{ ssh.permit_root_login }}{% endif %}
+
+{% if ssh.restrict_users == true %}
+AllowUsers{%- for user in ssh.users %}
+    {%- if 'authorized_key' in user and user.authorized_key is not none and user.authorized_key != '' %} {{ user.name }}{%- endif %}
+{%- endfor %}{% if ssh.include_git_user is defined and ssh.include_git_user == true %} git{% endif %}
+{% endif %}
+StrictModes yes
+
+PubkeyAuthentication yes
+#AuthorizedKeysFile     %h/.ssh/authorized_keys
+
+# Don't read the user's ~/.rhosts and ~/.shosts files
+IgnoreRhosts yes
+# similar for protocol version 2
+HostbasedAuthentication no
+
+# To enable empty passwords, change to yes (NOT RECOMMENDED)
+PermitEmptyPasswords no
+
+# Change to yes to enable challenge-response passwords (beware issues with
+# some PAM modules and threads)
+ChallengeResponseAuthentication no
+
+# Change to no to disable tunnelled clear text passwords
+PasswordAuthentication {% if ssh.password_authentication == true %}yes{% else %}no{% endif %}
+
+# Kerberos options
+#KerberosAuthentication no
+#KerberosGetAFSToken no
+#KerberosOrLocalPasswd yes
+#KerberosTicketCleanup yes
+
+# GSSAPI options
+#GSSAPIAuthentication no
+#GSSAPICleanupCredentials yes
+
+X11Forwarding yes
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog yes
+TCPKeepAlive yes
+#UseLogin no
+
+#MaxStartups 10:30:60
+#Banner /etc/issue.net
+
+# Allow client to pass locale environment variables
+AcceptEnv LANG LC_*
+
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+# Set this to 'yes' to enable PAM authentication, account processing,
+# and session processing. If this is enabled, PAM authentication will
+# be allowed through the ChallengeResponseAuthentication and
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication via ChallengeResponseAuthentication may bypass
+# the setting of "PermitRootLogin without-password".
+# If you just want the PAM account and session checks to run without
+# PAM authentication, then enable this but set PasswordAuthentication
+# and ChallengeResponseAuthentication to 'no'.
+UsePAM yes
+
+UseDNS {% if ssh.use_dns == true %}yes{% else %}no{% endif %}
+
+AddressFamily inet
+
+# Circumvent the broken ssh connections all the time
+ClientAliveInterval 60
+
+{% if ssh.enable_sk is defined and ssh.enable_sk == true %}
+# Only allow yubikeys (sk keys)
+PubkeyAcceptedKeyTypes sk-ssh-ed25519@openssh.com
+{% endif %}
+
+
+
+{% if ssh.include_git_user is defined and ssh.include_git_user == true %}
+# Allow only public key authentication for the git user
+Match User git
+    PasswordAuthentication no
+    AuthenticationMethods publickey
+    PubkeyAcceptedKeyTypes ssh-ed25519
+{% endif %}

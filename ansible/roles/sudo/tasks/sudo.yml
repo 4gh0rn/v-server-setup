@@ -1,0 +1,19 @@
+- name: install sudo
+  apt:
+    name: sudo
+    state: present
+
+- name: copy basic sudo config
+  template:
+    src: etc/sudoers
+    dest: /etc/sudoers
+
+- name: copy sudo config
+  template:
+    src: etc/sudoers.d/gb_settings
+    dest: /etc/sudoers.d/gb_settings
+
+- name: copy product sudo config
+  template:
+    src: etc/sudoers.d/product_settings
+    dest: /etc/sudoers.d/product_settings

@@ -1,0 +1,10 @@
+- name: Copy sources.list file for apt repos
+  template:
+    src: etc/apt/sources.list
+    dest: /etc/apt/sources.list
+
+# Aktualisiere apt Cache
+- name: Update apt Cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600

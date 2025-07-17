@@ -1,0 +1,65 @@
+# we have two 'setup user accounts' tasks, because working with undefined as user home will cause an issues
+
+- name: set up user accounts with specified home
+  become: true
+  user:
+    uid: "{{ item.uid }}"
+    name: "{{ item.name }}"
+    groups: "{{ item.groups | default([]) }}"
+    shell: "{{ item.shell | default('/bin/false') }}"
+    home: "{{ item.home }}"
+    remove: yes
+    state: "{{ item.state }}"
+  with_items: "{{ system.accounts.users.values() | list }}"
+  # ignore root user
+  when: item is mapping and item.name is defined and item.name != 'root'
+
+- name: set up user accounts without specified home
+  become: true
+  user:
+    uid: "{{ item.uid }}"
+    name: "{{ item.name }}"
+    groups: "{{ item.groups | default([]) }}"
+    shell: "{{ item.shell | default('/bin/false') }}"
+    remove: yes
+    state: "{{ item.state }}"
+  with_items: "{{ system.accounts.users.values() | list }}"
+  # ignore root user
+  when: item is mapping and item.name is defined and item.name != 'root'
+
+- name: set accounts password if configured
+  become: true
+  user:
+    uid: "{{ item.uid }}"
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+  with_items: "{{ system.accounts.users.values() | selectattr('password', 'defined') | list }}"
+  # ignore root user
+  when: item.name != 'root'
+
+- name: fix permissions for already existing users if necessary
+  become: true
+  file:
+    path: "{% if item.home is defined %}{{ item.home }}{% else %}/home/{{ item.name }}{% endif %}"
+    owner: "{{ item.name }}"
+    group: "{{ item.group | default(item.name) }}"
+    mode: u=rwX,g=rX,o=rX
+  with_items: "{{ system.accounts.users.values() | selectattr('state', 'equalto', 'present') | list }}"
+  when: item.name != 'root' and item.state == 'present' and not ansible_check_mode
+
+- name: fix home dir permissions
+  become: true
+  shell: "chown -R {{ item.name }}:{{ item.group | default(item.name) }} {% if item.home is defined %}{{ item.home }}{% else %}/home/{{ item.name }}{% endif %}"
+  with_items: "{{ system.accounts.users.values() | selectattr('state', 'equalto', 'present') | list }}"
+  changed_when: false
+  when: item.name != 'root' and item.state == 'present' and not ansible_check_mode
+
+- name: add .bashrc for all users
+  become: true
+  template:
+    src: home/{user}/.bashrc
+    dest: "{% if item.home is defined %}{{ item.home }}/.bashrc{% else %}/home/{{ item.name }}/.bashrc{% endif %}"
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+  with_items: "{{ system.accounts.users.values() | selectattr('state', 'equalto', 'present') | list }}"
+  when: item.name != 'root' and item.state == 'present'
