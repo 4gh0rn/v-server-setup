@@ -41,6 +41,9 @@ iptables:
         - port: 443
           protocol: tcp
           comment: https
+        - port: 8025
+          protocol: tcp
+          comment: baby-tool-shop
         - port: 8081
           protocol: tcp
           comment: nginx alternative site
